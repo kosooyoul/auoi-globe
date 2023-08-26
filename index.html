@@ -53,9 +53,8 @@
   
   let model;
 
-  let tempObjForRotation;
-  let quaternionA = new THREE.Quaternion();
-  let quaternionB = new THREE.Quaternion();
+  let previousQuaternion = new THREE.Quaternion();
+  let targetQuaternion = new THREE.Quaternion();
   let quaternionM = new THREE.Quaternion();
   let slerpTime = 0;
 
@@ -194,9 +193,9 @@
       satelliteGroup.rotation.x = Date.now() / 5000;
       satelliteGroup.rotation.z = 42;
 
-      
-      quaternionM.slerpQuaternions(quaternionA, quaternionB, slerpTime+=0.5);
-      playerGroup.quaternion.set(quaternionM.x, quaternionM.y, quaternionM.z, quaternionM.w);
+      // Slerp
+      quaternionM.slerpQuaternions(previousQuaternion, targetQuaternion, slerpTime+=0.05);
+      root.quaternion.set(quaternionM.x, quaternionM.y, quaternionM.z, quaternionM.w);
     })
   }
 
@@ -300,9 +299,17 @@
       
 
       let quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
-      quaternion.multiply(modelGroup.quaternion.invert())
+      let modelQ = modelGroup.quaternion.invert().clone();
+      quaternion.multiply(modelQ)
       const q = quaternion.invert();
       modelGroup.quaternion.copy(q)
+
+      previousQuaternion = root.quaternion.clone();
+      targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
+      targetQuaternion.multiply(modelQ)
+      // root.quaternion.copy(targetQuaternion);
+
+      slerpTime = 0;
     }
 
 
