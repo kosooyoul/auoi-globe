@@ -78,7 +78,7 @@
     document.body.appendChild(container);
 
     // CAMERA
-    camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1500);
+    camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
     camera.position.set(0, 1000, -50);
     // camera.position.set(0, 0, 1000);
 
@@ -88,19 +88,19 @@
     // SCENE
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 250, 2000);
+    scene.fog = new THREE.Fog(0x000000, 250, 3000);
 
     // LIGHTS
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2);
-    dirLight1.position.set(1, 0, 1).normalize();
-    scene.add(dirLight1);
+    // const dirLight1 = new THREE.DirectionalLight(0xffffff, 2);
+    // dirLight1.position.set(0.5, -0.5, 1).normalize();
+    // scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x00ffff, 2);
-    dirLight2.position.set(-1, 0, 1).normalize();
-    scene.add(dirLight2);
+    // const dirLight2 = new THREE.DirectionalLight(0xffffff, 2);
+    // dirLight2.position.set(-0.5, -0.5, 1).normalize();
+    // scene.add(dirLight2);
 
     const dirLight3 = new THREE.DirectionalLight(0xffffff, 2);
-    dirLight3.position.set(0, 0, 1).normalize();
+    dirLight3.position.set(0, 2, 1).normalize();
     scene.add(dirLight3);
 
     root = new THREE.Group();
@@ -108,21 +108,136 @@
 
     group = new THREE.Group();
 
+    const material4 = (() => {
+      const ambient = new THREE.TextureLoader().load( './assets/textures/rock/ambient.jpg' );
+      const basecolor = new THREE.TextureLoader().load( './assets/textures/rock/basecolor.jpg' );
+      const normal = new THREE.TextureLoader().load( './assets/textures/rock/normal.jpg' );
+      const roughness = new THREE.TextureLoader().load( './assets/textures/rock/roughness.jpg' );
+      const mapHeight = new THREE.TextureLoader().load( './assets/textures/rock/height.png' );
 
-    const sphere = (() => {
-      const geometry = new THREE.SphereGeometry( 200, 24, 12 ); 
-      const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-      const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
-      return sphere;
+      ambient.wrapS = THREE.RepeatWrapping;
+      ambient.wrapT = THREE.RepeatWrapping;
+      ambient.repeat.set( 4, 4 )
+      
+      basecolor.wrapS = THREE.RepeatWrapping;
+      basecolor.wrapT = THREE.RepeatWrapping;
+      basecolor.repeat.set( 4, 4 )
+      
+      normal.wrapS = THREE.RepeatWrapping;
+      normal.wrapT = THREE.RepeatWrapping;
+      normal.repeat.set( 4, 4 )
+      
+      roughness.wrapS = THREE.RepeatWrapping;
+      roughness.wrapT = THREE.RepeatWrapping;
+      roughness.repeat.set( 4, 4 )
+      
+      mapHeight.wrapS = THREE.RepeatWrapping;
+      mapHeight.wrapT = THREE.RepeatWrapping;
+      mapHeight.repeat.set( 4, 4 )
+
+      const material = new THREE.MeshLambertMaterial( {
+        map: basecolor,
+        aoMap: ambient,
+        bumpMap: normal,
+        color: 0x999999,
+        specular: 0xcccccc,
+        // displacementScale: 5,
+        // shininess: 2,
+        bumpMap: mapHeight,
+        bumpScale: 2
+      } );
+      
+      return material;
     })();
 
+    const material2 = (() => {
+      const ambient = new THREE.TextureLoader().load( './assets/textures/grass/ambient.jpg' );
+      const basecolor = new THREE.TextureLoader().load( './assets/textures/grass/basecolor.jpg' );
+      const normal = new THREE.TextureLoader().load( './assets/textures/grass/normal.jpg' );
+      const roughness = new THREE.TextureLoader().load( './assets/textures/grass/roughness.jpg' );
+      const mapHeight = new THREE.TextureLoader().load( './assets/textures/grass/height.jpg' );
+
+      ambient.wrapS = THREE.RepeatWrapping;
+      ambient.wrapT = THREE.RepeatWrapping;
+      ambient.repeat.set( 2, 2 )
+      
+      basecolor.wrapS = THREE.RepeatWrapping;
+      basecolor.wrapT = THREE.RepeatWrapping;
+      basecolor.repeat.set( 2, 2 )
+      
+      normal.wrapS = THREE.RepeatWrapping;
+      normal.wrapT = THREE.RepeatWrapping;
+      normal.repeat.set( 2, 2 )
+      
+      roughness.wrapS = THREE.RepeatWrapping;
+      roughness.wrapT = THREE.RepeatWrapping;
+      roughness.repeat.set( 2, 2 )
+      
+      mapHeight.wrapS = THREE.RepeatWrapping;
+      mapHeight.wrapT = THREE.RepeatWrapping;
+      mapHeight.repeat.set( 2, 2 )
+
+      const material = new THREE.MeshLambertMaterial( {
+        map: basecolor,
+        aoMap: ambient,
+        bumpMap: normal,
+        color: 0xaacc99,
+        specular: 0xcccccc,
+        // displacementScale: 5,
+        // shininess: 2,
+        bumpMap: mapHeight,
+        bumpScale: 2
+      } );
+      
+      return material;
+    })();
+
+    const material1 = (() => {
+      const ambient = new THREE.TextureLoader().load( './assets/textures/rock/ambient.jpg' );
+      const basecolor = new THREE.TextureLoader().load( './assets/textures/rock/basecolor.jpg' );
+      const normal = new THREE.TextureLoader().load( './assets/textures/rock/normal.jpg' );
+      const roughness = new THREE.TextureLoader().load( './assets/textures/rock/roughness.jpg' );
+      const mapHeight = new THREE.TextureLoader().load( './assets/textures/rock/height.png' );
+
+      const material = new THREE.MeshLambertMaterial( {
+        map: basecolor,
+        aoMap: ambient,
+        bumpMap: normal,
+        color: 0x999999,
+        specular: 0xcccccc,
+        // displacementScale: 5,
+        // shininess: 2,
+        bumpMap: mapHeight,
+        bumpScale: 2
+      } );
+      
+      return material;
+    })();
+
+    const sphere = (() => {
+      const geometry = new THREE.SphereGeometry( 200, 36, 18 ); 
+      // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
+      const sphere = new THREE.Mesh( geometry, material2 );
+      return sphere;
+    })();
     group.add(sphere);
     
+    const sphere2 = (() => {
+      const geometry = new THREE.SphereGeometry( 600, 32, 16 ); 
+      // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
+      const sphere = new THREE.Mesh( geometry, material4 );
+      sphere.position.y = -1200;
+      sphere.position.x = -300;
+      sphere.position.z = -500;
+      return sphere;
+    })();
+    group.add(sphere2);
+
     satelliteGroup = new THREE.Group();
     const satelliteSphere = (() => {
       const geometry = new THREE.SphereGeometry( 40, 24, 12 ); 
-      const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-      const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
+      // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
+      const sphere = new THREE.Mesh( geometry, material1 );
       sphere.position.y = 450;
       return sphere;
     })();
