@@ -36,12 +36,13 @@
   import * as THREE from 'three';
 
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
   THREE.Cache.enabled = true;
 
   let container;
 
-  let camera, cameraTarget, scene, renderer;
+  let camera, cameraTarget, scene, renderer, effect;
 
   let root, group;
   let satelliteGroup;
@@ -78,7 +79,7 @@
     document.body.appendChild(container);
 
     // CAMERA
-    camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
+    camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 500, 3000);
     camera.position.set(0, 1000, -50);
     // camera.position.set(0, 0, 1000);
 
@@ -87,8 +88,8 @@
 
     // SCENE
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 250, 3000);
+    scene.background = new THREE.Color(0x001632);
+    scene.fog = new THREE.Fog(0x001632, 1000, 2000);
 
     // LIGHTS
     // const dirLight1 = new THREE.DirectionalLight(0xffffff, 2);
@@ -140,11 +141,13 @@
         aoMap: ambient,
         bumpMap: normal,
         color: 0x999999,
-        specular: 0xcccccc,
+        // specular: 0xcccccc,
         // displacementScale: 5,
         // shininess: 2,
         bumpMap: mapHeight,
-        bumpScale: 2
+        bumpScale: 2,
+        side: THREE.FrontSide,
+        transparent: true,
       } );
       
       return material;
@@ -182,11 +185,13 @@
         aoMap: ambient,
         bumpMap: normal,
         color: 0xaacc99,
-        specular: 0xcccccc,
+        // specular: 0xcccccc,
         // displacementScale: 5,
         // shininess: 2,
         bumpMap: mapHeight,
-        bumpScale: 2
+        bumpScale: 2,
+        side: THREE.FrontSide,
+        transparent: true,
       } );
       
       return material;
@@ -204,11 +209,13 @@
         aoMap: ambient,
         bumpMap: normal,
         color: 0x999999,
-        specular: 0xcccccc,
+        // specular: 0xcccccc,
         // displacementScale: 5,
         // shininess: 2,
         bumpMap: mapHeight,
-        bumpScale: 2
+        bumpScale: 2,
+        side: THREE.FrontSide,
+        transparent: true,
       } );
       
       return material;
@@ -218,15 +225,25 @@
       const geometry = new THREE.SphereGeometry( 200, 36, 18 ); 
       // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
       const sphere = new THREE.Mesh( geometry, material2 );
+      sphere.visible = true
       return sphere;
     })();
     group.add(sphere);
+
+    const sphereAir = (() => {
+      const geometry = new THREE.TorusGeometry( 400, 3, 32 ); 
+      const material = new THREE.MeshBasicMaterial( { color: 0x00c8ff, alphaTest: 0.4, transparent: true, side: THREE.DoubleSide } ); 
+      const circle = new THREE.Mesh( geometry, material );
+      circle.effect = false;
+      return circle;
+    })()
+    group.add(sphereAir)
     
     const sphere2 = (() => {
       const geometry = new THREE.SphereGeometry( 600, 32, 16 ); 
       // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
       const sphere = new THREE.Mesh( geometry, material4 );
-      sphere.position.y = -1200;
+      sphere.position.y = -1000;
       sphere.position.x = -300;
       sphere.position.z = -500;
       return sphere;
@@ -238,7 +255,7 @@
       const geometry = new THREE.SphereGeometry( 40, 24, 12 ); 
       // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
       const sphere = new THREE.Mesh( geometry, material1 );
-      sphere.position.y = 450;
+      sphere.position.y = 500;
       return sphere;
     })();
     satelliteGroup.add(satelliteSphere);
@@ -296,6 +313,8 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
 
+    effect = new OutlineEffect(renderer)
+
     // EVENTS
 
     container.style.touchAction = 'none';
@@ -321,7 +340,8 @@
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    // renderer.setSize(window.innerWidth, window.innerHeight);
+    effect.setSize( window.innerWidth, window.innerHeight );
 
   }
 
@@ -385,7 +405,6 @@
     if (keyCode == 32) {
       fadeToAction("Jump", 0.5, true)
     }
-    console.log(keyCode)
   }
 
   function onKeyUp(event) {
@@ -430,8 +449,10 @@
 
     camera.lookAt(cameraTarget);
 
-    renderer.clear();
-    renderer.render(scene, camera);
+    // renderer.clear();
+    // renderer.render(scene, camera);
+    effect.clear();
+    effect.render(scene, camera);
 
   }
 
