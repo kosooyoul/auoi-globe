@@ -111,7 +111,7 @@
 
 
     const sphere = (() => {
-      const geometry = new THREE.SphereGeometry( 200, 64, 32 ); 
+      const geometry = new THREE.SphereGeometry( 200, 24, 12 ); 
       const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
       const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
       return sphere;
@@ -286,16 +286,16 @@
     if (model) {
       let x = 0;
       let y = 0;
-      if (keyStatus.left) y = -0.02;
-      else if (keyStatus.right) y = 0.02;
+      if (keyStatus.left) y = -0.04;
+      else if (keyStatus.right) y = 0.04;
       if (keyStatus.up) x = -0.01;
       else if (keyStatus.down) x = 0.01;
       
 
-      const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
-      group.quaternion.multiplyQuaternions(quaternion, group.quaternion)
-      
-      // sphere.quaternion.rotateTowards(quaternion, 0.05);
+      let quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
+      quaternion.multiply(modelGroup.quaternion.invert())
+      const q = quaternion.invert();
+      modelGroup.quaternion.copy(q)
     }
 
 
