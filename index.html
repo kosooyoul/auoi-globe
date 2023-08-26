@@ -211,8 +211,10 @@
 
   }
 
-  function fadeToAction( name, duration ) {
-    if ( activeAction == actions[ name ] ) return;
+  function fadeToAction( name, duration, force = false ) {
+    if (force == false) {
+      if ( activeAction == actions[ name ] ) return;
+    }
 
     previousAction = activeAction;
     activeAction = actions[ name ];
@@ -261,11 +263,15 @@
       fadeToAction('Walking', 0.2);
     }
     if (keyCode == 13) {
-      fadeToAction("Dance", 0.5)
+      fadeToAction("Dance", 0.5, true)
     }
     if (keyCode == 27) {
       fadeToAction("Death", 0.5)
     }
+    if (keyCode == 32) {
+      fadeToAction("Jump", 0.5, true)
+    }
+    console.log(keyCode)
   }
 
   function onKeyUp(event) {
@@ -276,6 +282,7 @@
     if (keyCode == 40) keyStatus.down = null;
     if (keyCode == 13) return;
     if (keyCode == 27) return;
+    if (keyCode == 32) return;
     if (keyStatus.left == null && keyStatus.right == null && keyStatus.up == null && keyStatus.down == null) {
       fadeToAction('Idle', 0.2);
     }
