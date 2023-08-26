@@ -63,6 +63,11 @@
 
   let keyStatus = {};
 
+  let clock, mixer;
+  let previousAction;
+  let activeAction;
+  let actions;
+
   let windowHalfX = window.innerWidth / 2;
 
   init();
@@ -70,12 +75,14 @@
 
   function init() {
 
+    clock = new THREE.Clock();
+
     container = document.createElement('div');
     document.body.appendChild(container);
 
     // CAMERA
     camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1500);
-    camera.position.set(0, 0, 1200);
+    camera.position.set(0, 800, -50);
     // camera.position.set(0, 0, 1000);
 
     cameraTarget = new THREE.Vector3(0, 0, 0);
@@ -106,7 +113,7 @@
 
 
     const sphere = (() => {
-      const geometry = new THREE.SphereGeometry( 200, 16, 8 ); 
+      const geometry = new THREE.SphereGeometry( 200, 64, 32 ); 
       const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
       const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
       return sphere;
@@ -116,7 +123,7 @@
     
     satelliteGroup = new THREE.Group();
     const satelliteSphere = (() => {
-      const geometry = new THREE.SphereGeometry( 40, 16, 8 ); 
+      const geometry = new THREE.SphereGeometry( 40, 24, 12 ); 
       const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
       const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
       sphere.position.y = 450;
@@ -167,6 +174,26 @@
       // model.rotation.x = -Math.PI / 2;
       modelGroup.add(model);
 
+      // Note: animation settings
+      const states = [ 'Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing' ];
+      const emotes = [ 'Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp' ];
+      mixer = new THREE.AnimationMixer( model );
+      actions = [];
+      for ( let i = 0; i < gltf.animations.length; i ++ ) {
+        const clip = gltf.animations[ i ];
+        const action = mixer.clipAction( clip );
+        actions[ clip.name ] = action;
+
+        if ( emotes.indexOf( clip.name ) >= 0 || states.indexOf( clip.name ) >= 4 ) {
+
+          action.clampWhenFinished = true;
+          action.loop = THREE.LoopOnce;
+
+        }
+      }
+      activeAction = actions[ 'Idle' ];
+      activeAction.play();
+
     }, undefined, function ( e ) {
       console.error( e );
     } );
@@ -207,9 +234,30 @@
 
   }
 
+  function fadeToAction( name, duration ) {
+    if ( activeAction == actions[ name ] ) return;
+
+    previousAction = activeAction;
+    activeAction = actions[ name ];
+
+    if ( previousAction !== activeAction ) {
+      previousAction.fadeOut( duration );
+    }
+
+    activeAction
+      .reset()
+      .setEffectiveTimeScale( 1 )
+      .setEffectiveWeight( 1 )
+      .fadeIn( duration )
+      .play();
+  }
   //
 
   function animate() {
+
+    const dt = clock.getDelta();
+
+    if ( mixer ) mixer.update( dt );
 
     requestAnimationFrame(animate);
 
@@ -219,10 +267,28 @@
 
   function onKeyDown(event) {
     const keyCode = event.which;
-    if (keyCode == 37) keyStatus.left = { pressed: true, ts: Date.now() };
-    if (keyCode == 39) keyStatus.right = { pressed: true, ts: Date.now() };
-    if (keyCode == 38) keyStatus.up = { pressed: true, ts: Date.now() };
-    if (keyCode == 40) keyStatus.down = { pressed: true, ts: Date.now() };
+    if (keyCode == 37) {
+      keyStatus.left = { pressed: true, ts: Date.now() };
+      fadeToAction('Walking', 0.2);
+    }
+    if (keyCode == 39) {
+      keyStatus.right = { pressed: true, ts: Date.now() };
+      fadeToAction('Walking', 0.2);
+    }
+    if (keyCode == 38) {
+      keyStatus.up = { pressed: true, ts: Date.now() };
+      fadeToAction('Walking', 0.2);
+    }
+    if (keyCode == 40) {
+      keyStatus.down = { pressed: true, ts: Date.now() };
+      fadeToAction('Walking', 0.2);
+    }
+    if (keyCode == 13) {
+      fadeToAction("Dance", 0.5)
+    }
+    if (keyCode == 27) {
+      fadeToAction("Death", 0.5)
+    }
   }
 
   function onKeyUp(event) {
@@ -231,6 +297,11 @@
     if (keyCode == 39) keyStatus.right = null;
     if (keyCode == 38) keyStatus.up = null;
     if (keyCode == 40) keyStatus.down = null;
+    if (keyCode == 13) return;
+    if (keyCode == 27) return;
+    if (keyStatus.left == null && keyStatus.right == null && keyStatus.up == null && keyStatus.down == null) {
+      fadeToAction('Idle', 0.2);
+    }
   }
 
   function render() {
@@ -293,8 +364,8 @@
 
       let x = 0;
       let y = 0;
-      if (keyStatus.left) y = -0.01;
-      else if (keyStatus.right) y = 0.01;
+      if (keyStatus.left) y = -0.02;
+      else if (keyStatus.right) y = 0.02;
       if (keyStatus.up) x = -0.01;
       else if (keyStatus.down) x = 0.01;
       
