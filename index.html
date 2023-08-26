@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-  <title>three.js webgl - geometry - text</title>
+  <title>Globe - in a universe of imagination</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
   <style>
@@ -10,6 +10,7 @@
     body {
       margin: 0px;
       background-color: black;
+      overflow: hidden;
     }
   </style>
 </head>
@@ -58,9 +59,6 @@
   let quaternionM = new THREE.Quaternion();
   let slerpTime = 0;
 
-  let latitude = 20;
-  let longitude = 30;
-
   let keyStatus = {};
 
   let clock, mixer;
@@ -82,7 +80,7 @@
 
     // CAMERA
     camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1500);
-    camera.position.set(0, 800, -50);
+    camera.position.set(0, 1000, -50);
     // camera.position.set(0, 0, 1000);
 
     cameraTarget = new THREE.Vector3(0, 0, 0);
@@ -142,27 +140,6 @@
     // modelGroup.add(camera);
     playerGroup.add(modelGroup);
     playerGroup.rotation.order = "YZX";
-    
-    // meshSphere = (() => {
-    //   const geometry = new THREE.SphereGeometry( 5, 4, 2 ); 
-    //   const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-    //   const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
-    //   sphere.position.y = 150;
-    //   sphere.position.z = 50;
-    //   return sphere;
-    // })();
-    // modelGroup.add(meshSphere);
-
-    // modelCamera = (() => {
-    //   const geometry = new THREE.SphereGeometry( 5, 4, 2 ); 
-    //   const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-    //   const sphere = new THREE.Mesh( geometry, material ); scene.add( sphere );
-    //   sphere.position.y = 450;
-    //   sphere.position.z = -250;
-    //   return sphere;
-    // })();
-    // modelGroup.add(modelCamera);
-
 
     const loader = new GLTFLoader();
     loader.load( './libs/threejs/models/gltf/RobotExpressive/RobotExpressive.glb', function ( gltf ) {
@@ -305,63 +282,8 @@
   }
 
   function render() {
-    latitude += 0.01;
-    longitude += 0.01;
-    //*
-    // if (model) {
-    //   // 구면 위의 좌표 계산
-    //   const x = 200 * Math.sin(latitude) * Math.cos(longitude);
-    //   const y = 200 * Math.cos(latitude);
-    //   const z = 200 * Math.sin(latitude) * Math.sin(longitude);
-    //   model.position.set(x, y, z);
-
-    //   // 구면의 표면 법선 벡터를 계산
-    //   const normal = model.position.clone().normalize();
-
-    //   // 캐릭터의 방향을 구면의 표면 법선 벡터와 맞추기
-    //   model.lookAt(normal);
-    // }
-    //*/
-    
-    // root.rotation.y += (1 - root.rotation.y) * 0.05;
-    // root.rotation.y += (1 - root.rotation.y) * 0.05;
-
-    // playerGroup.rotation.z += 0.01;
-    // playerXGroup.rotation.x += 0.01;
-    // playerYGroup.position.x += 0.001;
-
-    //
-    // tempObjForRotation = playerGroup.clone();
-    // tempObjForRotation.rotation.y = latitude;
-    // tempObjForRotation.rotation.z = 40 / 180 * Math.PI;
-
-    // tempObjForRotation.rotation.x = longitude;
-
-    // quaternionA.copy(playerGroup.quaternion); // src quaternion
-    // quaternionB.copy(tempObjForRotation.quaternion); // dst quaternion
-    // slerpTime = 0;
-    //
-
-
-
-    // meshSphere.getWorldPosition(cameraTarget);
-    // console.log(cameraTarget);
-
-    // modelCamera.getWorldPosition(camera.position)
-
-    // camera.position.set(objectPosition)
 
     if (model) {
-      // model.position.z = 50;
-
-
-      // const v = new THREE.Vector3();
-      // model.getWorldDirection(v);
-      // // modelGroup.rotation.set(v.normalize())
-      // console.log(v)
-      
-      // model.position.z = 0
-
       let x = 0;
       let y = 0;
       if (keyStatus.left) y = -0.02;
@@ -371,23 +293,9 @@
       
 
       const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
-    //   sphere.quaternion.rotateTowards(quaternion, 0.05);
-
-    //   const quaternion = new THREE.Quaternion();
-    //   quaternion.setFromAxisAngle(new THREE.Vector3(0.4, 1, 0.2).normalize(), 0.01);
       group.quaternion.multiplyQuaternions(quaternion, group.quaternion)
-
-
-      // tempObjForRotation = playerGroup.clone();
-      // const z = Math.atan2(1, 200);
-      // const y = Math.atan2(1, 200);
-      // tempObjForRotation.rotation.x += z;
-      // tempObjForRotation.rotation.y += y;
-
-      // quaternionA.copy(playerGroup.quaternion); // src quaternion
-      // quaternionB.copy(tempObjForRotation.quaternion); // dst quaternion
-      // slerpTime = 0;
-      //
+      
+      // sphere.quaternion.rotateTowards(quaternion, 0.05);
     }
 
 
