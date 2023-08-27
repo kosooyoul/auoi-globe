@@ -8,6 +8,10 @@
 <style>
 html, body { width: 100%; height: 100%; margin: 0px; background-color: black; overflow: hidden; }
 
+/* * { scroll-behavior: smooth; } */
+*::-webkit-scrollbar { height: 6px; width: 6px; }
+*::-webkit-scrollbar-thumb { background: white;border-radius: 3px; }
+
 div.layout-bottom {
   display: flex;
   flex-direction: column;
@@ -49,7 +53,7 @@ button.button-show-typing:active { background-color: #c8ff00; }
 div.layout-typing {
   display: flex;
   justify-content: center;
-  width: 400px;
+  width: 600px;
   max-width: 100%;
   height: 40px;
   background-color: black;
@@ -76,7 +80,7 @@ button.button-submit-typing:hover { background-color: #00c8ff; }
 button.button-submit-typing:active { background-color: #c8ff00; }
 
 body[data-mode=moving] .layout-typing { user-select: none; pointer-events: none; }
-body[data-mode=moving] .layout-bottom { bottom: -42px; }
+body[data-mode=moving] .layout-bottom { bottom: -120px; }
 
 body[data-mode=typing] .layout-show-bottom { opacity: 0; }
 </style>
@@ -87,6 +91,9 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
 <div class="layout-bottom">
   <div class="layout-show-bottom">
     <button class="button-show-typing">메시지</button>
+  </div>
+  <div class="layout-message-list" style="width: 600px; max-width: 100%; background: rgba(0, 0, 0, 0.4); border-radius: 8px; margin-bottom: 4px;">
+    <ul class="list-message" style="color: white; list-style: none; height: 52px; overflow: auto; margin: 8px 8px 4px 8px; padding: 4px; font-size: 14px; user-select: none; pointer-events: none;"></ul>
   </div>
   <div class="layout-typing">
     <input class="input-typing" type="text" style="display: block; position: relative; padding: 12px; width: 100%;  border: none; outline: none; background-color: white; color: black; font-size: 14px; font-family: sans-serif;">
@@ -138,7 +145,7 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
     document.body.appendChild(container);
 
     // CAMERA
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 400, 3000);
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 200, 3000);
     camera.position.set(0, 800, -50);
     // camera.position.set(0, 0, 1000);
 
@@ -187,9 +194,6 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
     if (keyCode == 39) keyStatus.right = { pressed: true, ts: Date.now() };
     if (keyCode == 38) keyStatus.up = { pressed: true, ts: Date.now() };
     if (keyCode == 40) keyStatus.down = { pressed: true, ts: Date.now() };
-    if (keyCode == 13) {
-
-    }
     if (keyCode == 32) {
       root.randomActionPlayer();
       keyStatus.left = null;
@@ -209,7 +213,6 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
     if (keyCode == 39) keyStatus.right = null;
     if (keyCode == 38) keyStatus.up = null;
     if (keyCode == 40) keyStatus.down = null;
-    if (keyCode == 13) return;
     if (keyCode == 32) return;
     if (keyStatus.left == null && keyStatus.right == null && keyStatus.up == null && keyStatus.down == null) {
       root.idlePlayer();
@@ -248,6 +251,7 @@ const GlobeApp = function() {
 
   // Elements
   const showTypingButton = document.querySelector('.button-show-typing');
+  const messageList = document.querySelector('.list-message');
   const typingBox = document.querySelector('.input-typing');
   const submitTypingButton = document.querySelector('.button-submit-typing');
 
@@ -258,7 +262,6 @@ const GlobeApp = function() {
   };
   
   this.setMovingMode = function() {
-    console.log('this.setMovingMode();')
     document.body.setAttribute('data-mode', mode = 'moving');
     typingBox.disabled = true;
     typingBox.blur();
@@ -310,6 +313,14 @@ const GlobeApp = function() {
       this.setMovingMode();
     }
   });
+
+  // Test
+  setInterval(() => {
+    const item = document.createElement('li');
+    item.textContent = "시스템 - 안녕하세요? " + new Date().toISOString();
+    messageList.appendChild(item);
+    messageList.scrollBy(0, 1000000);
+  }, 1000);
 
   // Initialize status
   this.setTypingMode();
