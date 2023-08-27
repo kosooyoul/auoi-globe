@@ -11,8 +11,10 @@ class GlobeGrassOrbisGroup extends THREE.Group {
   grassOrbisGroup;
   motherRockOrbisPivotGroup;
   motherRockOrbisGroup;
-  satelliteRockOrbisPivotGroup;
-  satelliteRockOrbisGroup;
+  satelliteRockOrbis1PivotGroup;
+  satelliteRockOrbis1Group;
+  satelliteRockOrbis2PivotGroup;
+  satelliteRockOrbis2Group;
 
   // Player & Npcs
   playerGroup;
@@ -21,8 +23,8 @@ class GlobeGrassOrbisGroup extends THREE.Group {
   motherNpc1Node;
   motherNpc2Group;
   motherNpc2Node;
-  satelliteNpcGroup;
-  satelliteNpcNode;
+  satelliteNpc1Group;
+  satelliteNpc1Node;
 
   constructor() {
     super();
@@ -43,12 +45,19 @@ class GlobeGrassOrbisGroup extends THREE.Group {
     this.motherRockOrbisPivotGroup.add(this.motherRockOrbisGroup);
     this.grassOrbisGroup.add(this.motherRockOrbisPivotGroup);
 
-    this.satelliteRockOrbisGroup = new THREE.Group();
-    this.satelliteRockOrbisGroup.add(new GLOBE.GlobeRockOrbisMesh({ size: 40, detail: 2 }));
-    this.satelliteRockOrbisGroup.position.set(0, -500, 0);
-    this.satelliteRockOrbisPivotGroup = new THREE.Group();
-    this.satelliteRockOrbisPivotGroup.add(this.satelliteRockOrbisGroup);
-    this.grassOrbisGroup.add(this.satelliteRockOrbisPivotGroup);
+    this.satelliteRockOrbis1Group = new THREE.Group();
+    this.satelliteRockOrbis1Group.add(new GLOBE.GlobeRockOrbisMesh({ size: 40, detail: 2 }));
+    this.satelliteRockOrbis1Group.position.set(0, -500, 0);
+    this.satelliteRockOrbis1PivotGroup = new THREE.Group();
+    this.satelliteRockOrbis1PivotGroup.add(this.satelliteRockOrbis1Group);
+    this.grassOrbisGroup.add(this.satelliteRockOrbis1PivotGroup);
+
+    this.satelliteRockOrbis2Group = new THREE.Group();
+    this.satelliteRockOrbis2Group.add(new GLOBE.GlobeRockOrbisMesh({ size: 40, detail: 2 }));
+    this.satelliteRockOrbis2Group.position.set(350, 0, -300);
+    this.satelliteRockOrbis2PivotGroup = new THREE.Group();
+    this.satelliteRockOrbis2PivotGroup.add(this.satelliteRockOrbis2Group);
+    this.grassOrbisGroup.add(this.satelliteRockOrbis2PivotGroup);
 
     this.add(this.grassOrbisGroup);
 
@@ -78,14 +87,23 @@ class GlobeGrassOrbisGroup extends THREE.Group {
     this.motherNpc2Group.add(this.motherNpc2Node);
     this.motherNpc2Group.quaternion.setFromEuler(new THREE.Euler(160, 74, 0));
 
-    this.satelliteNpcGroup = new THREE.Group();
-    this.satelliteRockOrbisGroup.add(this.satelliteNpcGroup);
+    this.satelliteNpc1Group = new THREE.Group();
+    this.satelliteRockOrbis1Group.add(this.satelliteNpc1Group);
 
-    this.satelliteNpcNode = new GLOBE.GlobeRobotCharaNode();
-    this.satelliteNpcNode.position.y = 40;
-    this.satelliteNpcNode.action = 'Dance';
-    this.satelliteNpcGroup.add(this.satelliteNpcNode);
-    this.satelliteNpcGroup.quaternion.setFromEuler(new THREE.Euler(82, 44, 0));
+    this.satelliteNpc1Node = new GLOBE.GlobeRobotCharaNode();
+    this.satelliteNpc1Node.position.y = 40;
+    this.satelliteNpc1Node.action = 'Dance';
+    this.satelliteNpc1Group.add(this.satelliteNpc1Node);
+    this.satelliteNpc1Group.quaternion.setFromEuler(new THREE.Euler(82, 44, 0));
+
+    this.satelliteNpc2Group = new THREE.Group();
+    this.satelliteRockOrbis2Group.add(this.satelliteNpc2Group);
+
+    this.satelliteNpc2Node = new GLOBE.GlobeRobotCharaNode();
+    this.satelliteNpc2Node.position.y = 40;
+    this.satelliteNpc2Node.action = 'Running';
+    this.satelliteNpc2Group.add(this.satelliteNpc2Node);
+    this.satelliteNpc2Group.quaternion.setFromEuler(new THREE.Euler(23, 77, 0));
   }
 
   idlePlayer() {
@@ -132,12 +150,17 @@ class GlobeGrassOrbisGroup extends THREE.Group {
       this.motherRockOrbisGroup.rotation.z = Date.now() / 20000;
       this.motherRockOrbisGroup.rotation.y = Date.now() / 40000;
 
-      this.satelliteRockOrbisPivotGroup.rotation.z = Date.now() / 5000;
-      this.satelliteRockOrbisPivotGroup.rotation.y = 0.5;
-      this.satelliteRockOrbisGroup.rotation.z = Date.now() / 1000;
-      this.satelliteRockOrbisGroup.rotation.y = Date.now() / 3000;
+      this.satelliteRockOrbis1PivotGroup.rotation.z = Date.now() / 5000;
+      this.satelliteRockOrbis1PivotGroup.rotation.y = 0.5;
+      this.satelliteRockOrbis1Group.rotation.z = Date.now() / 1000;
+      this.satelliteRockOrbis1Group.rotation.y = Date.now() / 3000;
 
-      // Slerp
+      this.satelliteRockOrbis2PivotGroup.rotation.z = Date.now() / 4000;
+      this.satelliteRockOrbis2PivotGroup.rotation.y = 1.5;
+      this.satelliteRockOrbis2Group.rotation.z = Date.now() / 1000;
+      this.satelliteRockOrbis2Group.rotation.y = Date.now() / 3000;
+
+      // Slerpz
       this.slerpedQuaternion.slerpQuaternions(this.previousQuaternion, this.targetQuaternion, this.slerpTime += 0.05);
       this.quaternion.copy(this.slerpedQuaternion);
     })();
@@ -156,10 +179,18 @@ class GlobeGrassOrbisGroup extends THREE.Group {
       this.motherNpc2Group.quaternion.copy(rotatedQuaternion);
     })();
 
+    (() => {
+      const rotationQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.04, 0, 0));
+      const satelliteNpcQuaternionInverted = this.satelliteNpc2Group.quaternion.clone().invert();
+      const rotatedQuaternion = rotationQuaternion.multiply(satelliteNpcQuaternionInverted).invert();
+      this.satelliteNpc2Group.quaternion.copy(rotatedQuaternion);
+    })();
+
     this.playerNode.updateAnimation();
     this.motherNpc1Node.updateAnimation();
     this.motherNpc2Node.updateAnimation();
-    this.satelliteNpcNode.updateAnimation();
+    this.satelliteNpc1Node.updateAnimation();
+    this.satelliteNpc2Node.updateAnimation();
   }
 }
 
