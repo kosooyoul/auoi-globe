@@ -93,7 +93,7 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
     <button class="button-show-typing">메시지</button>
   </div>
   <div class="layout-message-list" style="width: 600px; max-width: 100%; background: rgba(0, 0, 0, 0.4); border-radius: 8px; margin-bottom: 4px;">
-    <ul class="list-message" style="color: white; list-style: none; height: 52px; overflow: auto; margin: 8px 8px 4px 8px; padding: 4px; font-size: 14px; user-select: none; pointer-events: none;"></ul>
+    <ul class="list-message" style="color: white; list-style: none; height: 52px; overflow: auto; margin: 8px 8px 4px 8px; padding: 4px; font-size: 14px; user-select: none;"></ul>
   </div>
   <div class="layout-typing">
     <input class="input-typing" type="text" style="display: block; position: relative; padding: 12px; width: 100%;  border: none; outline: none; background-color: white; color: black; font-size: 14px; font-family: sans-serif;">
@@ -103,8 +103,8 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
 
 <!-- Import maps polyfill -->
 <!-- Remove this when import maps will be widely supported -->
-<script async src=" https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js">
-</script>
+<script async src=" https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+<script type="text/javascript" src="./libs/socket.io/socket.io-4.5.4.min.js"></script>
 
 <script type="importmap">
 {
@@ -118,131 +118,145 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
 
 
 <script type="module">
+import * as THREE from 'three';
+import * as GLOBE from 'globe';
 
-  import * as THREE from 'three';
-  import * as GLOBE from 'globe';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
-  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-  import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+THREE.Cache.enabled = true;
 
-  THREE.Cache.enabled = true;
+let container;
 
-  let container;
+let renderer, effect;
+let camera, cameraTarget, scene;
 
-  let renderer, effect;
-  let camera, cameraTarget, scene;
+let root;
 
-  let root;
+let keyStatus = {};
 
-  let keyStatus = {};
+init();
+animate();
 
-  init();
-  animate();
+function init() {
 
-  function init() {
+  container = document.createElement('div');
+  document.body.appendChild(container);
 
-    container = document.createElement('div');
-    document.body.appendChild(container);
+  // CAMERA
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 200, 3000);
+  camera.position.set(0, 800, -50);
+  // camera.position.set(0, 0, 1000);
 
-    // CAMERA
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 200, 3000);
-    camera.position.set(0, 800, -50);
-    // camera.position.set(0, 0, 1000);
+  cameraTarget = new THREE.Vector3(0, 0, 0);
+  // cameraTarget = new THREE.Vector3(0, 0, 1);
 
-    cameraTarget = new THREE.Vector3(0, 0, 0);
-    // cameraTarget = new THREE.Vector3(0, 0, 1);
+  // SCENE
+  scene = new GLOBE.GlobeOrbisScene();
+  root = new GLOBE.GlobeGrassOrbisGroup();
+  root.setOnPlayerStatusListener(({ quaternion, action }) => window.postMessage({
+    'type': 'player-status',
+    'quaternion': {
+      x: quaternion.x,
+      y: quaternion.y,
+      z: quaternion.z,
+      w: quaternion.w,
+    },
+    'action': action,
+  }));
 
-    // SCENE
-    scene = new GLOBE.GlobeOrbisScene();
-    root = new GLOBE.GlobeGrassOrbisGroup();
+  scene.add(root);
 
-    scene.add(root);
+  // RENDERER
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  container.appendChild(renderer.domElement);
+  effect = new OutlineEffect(renderer)
 
-    // RENDERER
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    container.appendChild(renderer.domElement);
-    effect = new OutlineEffect(renderer)
+  // EVENTS
+  container.style.touchAction = 'none';
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
 
-    // EVENTS
-    container.style.touchAction = 'none';
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('resize', onWindowResize);
 
-    window.addEventListener('resize', onWindowResize);
-  }
-
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    // renderer.setSize(window.innerWidth, window.innerHeight);
-    effect.setSize( window.innerWidth, window.innerHeight );
-  }
-
-  function animate() {
-    compute();
-    render();
-
-    requestAnimationFrame(animate);
-  }
-
-  function onKeyDown(event) {
-    const keyCode = event.which;
-    if (keyCode == 37) keyStatus.left = { pressed: true, ts: Date.now() };
-    if (keyCode == 39) keyStatus.right = { pressed: true, ts: Date.now() };
-    if (keyCode == 38) keyStatus.up = { pressed: true, ts: Date.now() };
-    if (keyCode == 40) keyStatus.down = { pressed: true, ts: Date.now() };
-    if (keyCode == 32) {
-      root.randomActionPlayer();
-      keyStatus.left = null;
-      keyStatus.right = null;
-      keyStatus.up = null;
-      keyStatus.down = null;
-      return;
+  window.addEventListener('message', (event) => {
+    if (event.data.type == 'people-status') {
+      root.updatePeopleStatus(event.data.id, event.data);
     }
-    if (keyStatus.left != null || keyStatus.right != null || keyStatus.up != null || keyStatus.down != null) {
-      root.walkPlayer();
-    }
+  });
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  // renderer.setSize(window.innerWidth, window.innerHeight);
+  effect.setSize( window.innerWidth, window.innerHeight );
+}
+
+function animate() {
+  compute();
+  render();
+
+  requestAnimationFrame(animate);
+}
+
+function onKeyDown(event) {
+  const keyCode = event.which;
+  if (keyCode == 37) keyStatus.left = { pressed: true, ts: Date.now() };
+  if (keyCode == 39) keyStatus.right = { pressed: true, ts: Date.now() };
+  if (keyCode == 38) keyStatus.up = { pressed: true, ts: Date.now() };
+  if (keyCode == 40) keyStatus.down = { pressed: true, ts: Date.now() };
+  if (keyCode == 32) {
+    root.randomActionPlayer();
+    keyStatus.left = null;
+    keyStatus.right = null;
+    keyStatus.up = null;
+    keyStatus.down = null;
+    return;
   }
-
-  function onKeyUp(event) {
-    const keyCode = event.which;
-    if (keyCode == 37) keyStatus.left = null;
-    if (keyCode == 39) keyStatus.right = null;
-    if (keyCode == 38) keyStatus.up = null;
-    if (keyCode == 40) keyStatus.down = null;
-    if (keyCode == 32) return;
-    if (keyStatus.left == null && keyStatus.right == null && keyStatus.up == null && keyStatus.down == null) {
-      root.idlePlayer();
-    }
+  if (keyStatus.left != null || keyStatus.right != null || keyStatus.up != null || keyStatus.down != null) {
+    root.walkPlayer();
   }
+}
 
-  function compute() {
-    // Player moving
-    let movingDirection = 0, turningDirection = 0;
-    if (keyStatus.left) turningDirection = -1;
-    else if (keyStatus.right) turningDirection = 1;
-    if (keyStatus.up) movingDirection = 1;
-    else if (keyStatus.down) movingDirection = -1;
-
-    root.movePlayer(movingDirection, turningDirection);
-
-    root.updateAnimation();
+function onKeyUp(event) {
+  const keyCode = event.which;
+  if (keyCode == 37) keyStatus.left = null;
+  if (keyCode == 39) keyStatus.right = null;
+  if (keyCode == 38) keyStatus.up = null;
+  if (keyCode == 40) keyStatus.down = null;
+  if (keyCode == 32) return;
+  if (keyStatus.left == null && keyStatus.right == null && keyStatus.up == null && keyStatus.down == null) {
+    root.idlePlayer();
   }
+}
 
-  function render() {
+function compute() {
+  // Player moving
+  let movingDirection = 0, turningDirection = 0;
+  if (keyStatus.left) turningDirection = -1;
+  else if (keyStatus.right) turningDirection = 1;
+  if (keyStatus.up) movingDirection = 1;
+  else if (keyStatus.down) movingDirection = -1;
 
-    camera.lookAt(cameraTarget);
+  root.movePlayer(movingDirection, turningDirection);
 
-    // renderer.clear();
-    // renderer.render(scene, camera);
+  root.updateAnimation();
+}
 
-    effect.clear();
-    effect.render(scene, camera);
-  }
+function render() {
 
+  camera.lookAt(cameraTarget);
+
+  // renderer.clear();
+  // renderer.render(scene, camera);
+
+  effect.clear();
+  effect.render(scene, camera);
+}
 </script>
 
 <script type="module">
@@ -278,6 +292,10 @@ const GlobeApp = function() {
 
     // TODO
     console.log(typingContent);
+    window.postMessage({
+      'type': 'player-message',
+      'message': typingContent,
+    });
     
     return true;
   }
@@ -314,22 +332,125 @@ const GlobeApp = function() {
     }
   });
 
-  // Test
-  setInterval(() => {
-    const item = document.createElement('li');
-    item.textContent = "시스템 - 안녕하세요? " + new Date().toISOString();
-    messageList.appendChild(item);
-    messageList.scrollBy(0, 1000000);
-  }, 1000);
+  window.addEventListener('message', (event) => {
+    if (event.data.type == 'people-message') {
+      const item = document.createElement('li');
+      item.textContent = `[${event.data.id}] ${event.data.message}`;
+      messageList.appendChild(item);
+      messageList.scrollBy(0, 1000000);
+    }
+  });
 
   // Initialize status
   this.setTypingMode();
 };
 
-window.onload = function() {
-  const app = new GlobeApp();
+const GlobeSocket = function() {
+  const socket = new io('https://subscribe.auoi.net');
+
+  const onlineObjects = {};
+  let socketId = null;
+
+  const onReady = (data) => {
+    socketId = data.id;
+    console.log('socketId', data);
+
+    for (const id in data.objects) {
+      const object = data.objects[id];
+      onlineObjects[id] = { id: object.id, quaternion: object.q, action: object.a, message: null };
+    }
+
+    // socket.emit('enter', { q: object.q, a: object.a  });x
+  };
+
+  const onEnter = (data) => {
+    if (data.id == socketId) return;
+
+    onlineObjects[data.id] = {
+      id: data.id,
+      quaternion: data.q,
+      action: data.a,
+      message: null,
+    };
+  };
+
+  const onMove = (data) => {
+    if (data.id == socketId) return;
+
+    window.postMessage({ type: 'people-status', id: data.id, quaternion: data.q, action: data.a });
+
+    // if (onlineObjects[data.id] == null) {
+    //   onlineObjects[data.id] = {
+    //     id: data.id,
+    //     quaternion: data.q,
+    //     action: data.a,
+    //     message: null,
+    //   };
+    // } else {
+    //   onlineObjects[data.id].quaternion = data.q;
+    //   onlineObjects[data.id].action = data.a;
+    //   onlineObjects[data.id].message = data.m;
+    // }
+  };
+
+  const onLeave = (data) => {
+    if (data.id == socketId) return;
+
+    delete onlineObjects[data.id];
+  };
+
+  const onMessage = (data) => {
+    if (data.id == socketId) return;
+
+    window.postMessage({ type: 'people-message', id: data.id, message: data.message });
+
+    // if (onlineObjects[data.id] != null) {
+    //   onlineObjects[data.id].message = data.m;
+    //   onlineObjects[data.id].messageExpiresIn = Date.now() + 1000 * 5;
+    // }
+  };
+
+  this.subscribe = function() {
+    socket.on('ready', onReady);
+    socket.on('enter', onEnter);
+    socket.on('move', onMove);
+    socket.on('leave', onLeave);
+    socket.on('message', onMessage);
+  };
+
+  this.sendMessage = function(message) {
+    socket.emit('message', { message });
+    window.postMessage({ type: 'people-message', id: socketId, message: message });
+  };
+
+  this.postStatus = function({ quaternion, action }) {
+		socket.emit('move', {
+			q: quaternion,
+			a: action,
+		});
+  };
+
+  let lastPlayerStatusPostedAt;
+  window.addEventListener('message', (event) => {
+    if (event.data.type == 'player-status') {
+      if (Date.now() - lastPlayerStatusPostedAt < 1000) return;
+
+      this.postStatus({
+        quaternion: event.data.quaternion,
+        action: event.data.action,
+      });
+      lastPlayerStatusPostedAt = Date.now();
+    } else if (event.data.type == 'player-message') {
+      this.sendMessage(event.data.message);
+    }
+  });
 };
 
+window.onload = function() {
+  const app = new GlobeApp();
+  const socket = new GlobeSocket();
+  socket.subscribe();
+};
 </script>
 
 </body>

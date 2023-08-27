@@ -26,6 +26,9 @@ class GlobeGrassOrbisGroup extends THREE.Group {
   satelliteNpc1Group;
   satelliteNpc1Node;
 
+  // Peoples
+  peoples = {};
+
   constructor() {
     super();
       
@@ -106,6 +109,39 @@ class GlobeGrassOrbisGroup extends THREE.Group {
     this.satelliteNpc2Group.quaternion.setFromEuler(new THREE.Euler(23, 77, 0));
   }
 
+  setOnPlayerStatusListener(listener) {
+    this.playerStatusListener = listener;
+  }
+
+  updatePeopleStatus(id, data) {
+    if (this.peoples[id] == null) {
+      console.log(id, data);
+
+      const grassPeopleGroup = new THREE.Group();
+      this.grassOrbisGroup.add(grassPeopleGroup);
+
+      const grassPeopleNode = new GLOBE.GlobeRobotCharaNode();
+      grassPeopleNode.position.y = 200;
+      grassPeopleNode.action = 'Walking';
+      grassPeopleGroup.add(grassPeopleNode);
+      grassPeopleGroup.quaternion.copy(data.quaternion);
+
+      this.peoples[id] = {
+        quaternion: new THREE.Quaternion(),
+        previousQuaternion: grassPeopleGroup.quaternion.clone(),
+        targetQuaternion: grassPeopleGroup.quaternion.clone(),
+        node: grassPeopleNode,
+        group: grassPeopleGroup,
+        slerpTime: 1,
+      };
+    } else {
+      const people = this.peoples[id];
+      people.previousQuaternion.copy(people.group.quaternion.clone());
+      people.targetQuaternion.copy(data.quaternion);
+      people.slerpTime = 0;
+    }
+  }
+
   idlePlayer() {
     this.playerNode.fadeToAction('Idle', 0.2);
   }
@@ -141,6 +177,11 @@ class GlobeGrassOrbisGroup extends THREE.Group {
     this.targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
     this.targetQuaternion.multiply(playerQuaternionInverted);
     this.slerpTime = 0;
+
+    // Event
+    if (this.playerStatusListener) {
+      this.playerStatusListener({ 'quaternion': rotatedQuaternion, 'status': 'Walking' });
+    }
   }
 
   updateAnimation() {
@@ -160,7 +201,7 @@ class GlobeGrassOrbisGroup extends THREE.Group {
       this.satelliteRockOrbis2Group.rotation.z = Date.now() / 1000;
       this.satelliteRockOrbis2Group.rotation.y = Date.now() / 3000;
 
-      // Slerpz
+      // Slerp
       this.slerpedQuaternion.slerpQuaternions(this.previousQuaternion, this.targetQuaternion, this.slerpTime += 0.05);
       this.quaternion.copy(this.slerpedQuaternion);
     })();
@@ -191,6 +232,17 @@ class GlobeGrassOrbisGroup extends THREE.Group {
     this.motherNpc2Node.updateAnimation();
     this.satelliteNpc1Node.updateAnimation();
     this.satelliteNpc2Node.updateAnimation();
+
+    for (const id in this.peoples) {
+      const people = this.peoples[id];
+
+      // Slerp
+      people.quaternion.slerpQuaternions(people.previousQuaternion, people.targetQuaternion, people.slerpTime += 0.02);
+      people.group.quaternion.copy(people.quaternion);
+
+      // Animation
+      people.node.updateAnimation();
+    }
   }
 }
 
