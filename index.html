@@ -26,14 +26,17 @@
 {
   "imports": {
     "three": "./libs/threejs/build/three.module.js",
-    "three/addons/": "./libs/threejs/jsm/"
+    "three/addons/": "./libs/threejs/jsm/",
+    "globe": "./src/index.js"
   }
 }
 </script>
 
+
 <script type="module">
 
   import * as THREE from 'three';
+  import * as GLOBE from 'globe';
 
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
@@ -44,15 +47,15 @@
 
   let camera, cameraTarget, scene, renderer, effect;
 
-  let root, group;
-  let satelliteGroup;
-  let playerGroup;
-  let playerYGroup;
-  let modelGroup;
-  let meshSphere;
+  let root, grassOrbisGroup;
+  let motherRockOrbisGroup;
+  let satelliteRockOrbisGroup;
   let modelCamera;
   
-  let model;
+  let playerGroup, playerNode;
+  let motherNpc1Group, motherNpc1Node;
+  let motherNpc2Group, motherNpc2Node;
+  let satelliteNpcGroup, satelliteNpcNode;
 
   let previousQuaternion = new THREE.Quaternion();
   let targetQuaternion = new THREE.Quaternion();
@@ -61,26 +64,17 @@
 
   let keyStatus = {};
 
-  let clock, mixer;
-  let previousAction;
-  let activeAction;
-  let actions;
-
-  let windowHalfX = window.innerWidth / 2;
-
   init();
   animate();
 
   function init() {
 
-    clock = new THREE.Clock();
-
     container = document.createElement('div');
     document.body.appendChild(container);
 
     // CAMERA
-    camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 500, 3000);
-    camera.position.set(0, 1000, -50);
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 400, 3000);
+    camera.position.set(0, 800, -50);
     // camera.position.set(0, 0, 1000);
 
     cameraTarget = new THREE.Vector3(0, 0, 0);
@@ -92,13 +86,13 @@
     scene.fog = new THREE.Fog(0x001632, 1000, 2000);
 
     // LIGHTS
-    // const dirLight1 = new THREE.DirectionalLight(0xffffff, 2);
-    // dirLight1.position.set(0.5, -0.5, 1).normalize();
-    // scene.add(dirLight1);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight1.position.set(0.5, -0.5, 1).normalize();
+    scene.add(dirLight1);
 
-    // const dirLight2 = new THREE.DirectionalLight(0xffffff, 2);
-    // dirLight2.position.set(-0.5, -0.5, 1).normalize();
-    // scene.add(dirLight2);
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight2.position.set(-0.5, -0.5, 1).normalize();
+    scene.add(dirLight2);
 
     const dirLight3 = new THREE.DirectionalLight(0xffffff, 2);
     dirLight3.position.set(0, 2, 1).normalize();
@@ -107,216 +101,66 @@
     root = new THREE.Group();
     root.position.y = 0;
 
-    group = new THREE.Group();
-
-    const material4 = (() => {
-      const ambient = new THREE.TextureLoader().load( './assets/textures/rock/ambient.jpg' );
-      const basecolor = new THREE.TextureLoader().load( './assets/textures/rock/basecolor.jpg' );
-      const normal = new THREE.TextureLoader().load( './assets/textures/rock/normal.jpg' );
-      const roughness = new THREE.TextureLoader().load( './assets/textures/rock/roughness.jpg' );
-      const mapHeight = new THREE.TextureLoader().load( './assets/textures/rock/height.png' );
-
-      ambient.wrapS = THREE.RepeatWrapping;
-      ambient.wrapT = THREE.RepeatWrapping;
-      ambient.repeat.set( 4, 4 )
-      
-      basecolor.wrapS = THREE.RepeatWrapping;
-      basecolor.wrapT = THREE.RepeatWrapping;
-      basecolor.repeat.set( 4, 4 )
-      
-      normal.wrapS = THREE.RepeatWrapping;
-      normal.wrapT = THREE.RepeatWrapping;
-      normal.repeat.set( 4, 4 )
-      
-      roughness.wrapS = THREE.RepeatWrapping;
-      roughness.wrapT = THREE.RepeatWrapping;
-      roughness.repeat.set( 4, 4 )
-      
-      mapHeight.wrapS = THREE.RepeatWrapping;
-      mapHeight.wrapT = THREE.RepeatWrapping;
-      mapHeight.repeat.set( 4, 4 )
-
-      const material = new THREE.MeshLambertMaterial( {
-        map: basecolor,
-        aoMap: ambient,
-        bumpMap: normal,
-        color: 0x999999,
-        // specular: 0xcccccc,
-        // displacementScale: 5,
-        // shininess: 2,
-        bumpMap: mapHeight,
-        bumpScale: 2,
-        side: THREE.FrontSide,
-        transparent: true,
-      } );
-      
-      return material;
-    })();
-
-    const material2 = (() => {
-      const ambient = new THREE.TextureLoader().load( './assets/textures/grass/ambient.jpg' );
-      const basecolor = new THREE.TextureLoader().load( './assets/textures/grass/basecolor.jpg' );
-      const normal = new THREE.TextureLoader().load( './assets/textures/grass/normal.jpg' );
-      const roughness = new THREE.TextureLoader().load( './assets/textures/grass/roughness.jpg' );
-      const mapHeight = new THREE.TextureLoader().load( './assets/textures/grass/height.jpg' );
-
-      ambient.wrapS = THREE.RepeatWrapping;
-      ambient.wrapT = THREE.RepeatWrapping;
-      ambient.repeat.set( 2, 2 )
-      
-      basecolor.wrapS = THREE.RepeatWrapping;
-      basecolor.wrapT = THREE.RepeatWrapping;
-      basecolor.repeat.set( 2, 2 )
-      
-      normal.wrapS = THREE.RepeatWrapping;
-      normal.wrapT = THREE.RepeatWrapping;
-      normal.repeat.set( 2, 2 )
-      
-      roughness.wrapS = THREE.RepeatWrapping;
-      roughness.wrapT = THREE.RepeatWrapping;
-      roughness.repeat.set( 2, 2 )
-      
-      mapHeight.wrapS = THREE.RepeatWrapping;
-      mapHeight.wrapT = THREE.RepeatWrapping;
-      mapHeight.repeat.set( 2, 2 )
-
-      const material = new THREE.MeshLambertMaterial( {
-        map: basecolor,
-        aoMap: ambient,
-        bumpMap: normal,
-        color: 0xaacc99,
-        // specular: 0xcccccc,
-        // displacementScale: 5,
-        // shininess: 2,
-        bumpMap: mapHeight,
-        bumpScale: 2,
-        side: THREE.FrontSide,
-        transparent: true,
-      } );
-      
-      return material;
-    })();
-
-    const material1 = (() => {
-      const ambient = new THREE.TextureLoader().load( './assets/textures/rock/ambient.jpg' );
-      const basecolor = new THREE.TextureLoader().load( './assets/textures/rock/basecolor.jpg' );
-      const normal = new THREE.TextureLoader().load( './assets/textures/rock/normal.jpg' );
-      const roughness = new THREE.TextureLoader().load( './assets/textures/rock/roughness.jpg' );
-      const mapHeight = new THREE.TextureLoader().load( './assets/textures/rock/height.png' );
-
-      const material = new THREE.MeshLambertMaterial( {
-        map: basecolor,
-        aoMap: ambient,
-        bumpMap: normal,
-        color: 0x999999,
-        // specular: 0xcccccc,
-        // displacementScale: 5,
-        // shininess: 2,
-        bumpMap: mapHeight,
-        bumpScale: 2,
-        side: THREE.FrontSide,
-        transparent: true,
-      } );
-      
-      return material;
-    })();
-
-    const sphere = (() => {
-      const geometry = new THREE.SphereGeometry( 200, 36, 18 ); 
-      // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-      const sphere = new THREE.Mesh( geometry, material2 );
-      sphere.visible = true
-      return sphere;
-    })();
-    group.add(sphere);
-
-    const sphereAir = (() => {
-      const geometry = new THREE.TorusGeometry( 400, 3, 32 ); 
-      const material = new THREE.MeshBasicMaterial( { color: 0x00c8ff, alphaTest: 0.4, transparent: true, side: THREE.DoubleSide } ); 
-      const circle = new THREE.Mesh( geometry, material );
-      circle.effect = false;
-      return circle;
-    })()
-    group.add(sphereAir)
+    grassOrbisGroup = new THREE.Group();
+    grassOrbisGroup.add(new GLOBE.GlobeGrassOrbisMesh({ size: 200, detail: 4 }));
+    grassOrbisGroup.add(new GLOBE.GlobeRingOrbisMesh({ size: 400, width: 3 }))
     
-    const sphere2 = (() => {
-      const geometry = new THREE.SphereGeometry( 600, 32, 16 ); 
-      // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-      const sphere = new THREE.Mesh( geometry, material4 );
-      sphere.position.y = -1000;
-      sphere.position.x = -300;
-      sphere.position.z = -500;
-      return sphere;
-    })();
-    group.add(sphere2);
+    motherRockOrbisGroup = new THREE.Group();
+    motherRockOrbisGroup.add(new GLOBE.GlobeRockOrbisMesh({ size: 600, detail: 4 }))
+    motherRockOrbisGroup.position.set(-300, -1000, -500);
+    grassOrbisGroup.add(motherRockOrbisGroup);
 
-    satelliteGroup = new THREE.Group();
-    const satelliteSphere = (() => {
-      const geometry = new THREE.SphereGeometry( 40, 24, 12 ); 
-      // const material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } ); 
-      const sphere = new THREE.Mesh( geometry, material1 );
-      sphere.position.y = 500;
-      return sphere;
-    })();
-    satelliteGroup.add(satelliteSphere);
-    group.add(satelliteGroup);
+    satelliteRockOrbisGroup = new THREE.Group();
+    satelliteRockOrbisGroup.add(new GLOBE.GlobeRockOrbisMesh({ size: 40, detail: 2 }));
+    satelliteRockOrbisGroup.position.set(0, -500, 0);
+    grassOrbisGroup.add(satelliteRockOrbisGroup);
 
     scene.add(root);
 
-    root.add(group);
+    root.add(grassOrbisGroup);
   
     playerGroup = new THREE.Group();
-    root.add( playerGroup );
-    modelGroup = new THREE.Group();
-    // modelGroup.add(camera);
-    playerGroup.add(modelGroup);
-    playerGroup.rotation.order = "YZX";
+    grassOrbisGroup.add( playerGroup );
 
-    const loader = new GLTFLoader();
-    loader.load( './libs/threejs/models/gltf/RobotExpressive/RobotExpressive.glb', function ( gltf ) {
-      model = gltf.scene;
-      model.position.y = 200;
-      model.scale.x = 10;
-      model.scale.y = 10;
-      model.scale.z = 10;
-      // model.rotation.x = -Math.PI / 2;
-      modelGroup.add(model);
+    playerNode = new GLOBE.GlobeRobotCharaNode();
+    playerNode.position.y = 200;
+    playerGroup.add(playerNode);
 
-      // Note: animation settings
-      const states = [ 'Idle', 'Walking', 'Running', 'Dance', 'Death', 'Sitting', 'Standing' ];
-      const emotes = [ 'Jump', 'Yes', 'No', 'Wave', 'Punch', 'ThumbsUp' ];
-      mixer = new THREE.AnimationMixer( model );
-      actions = [];
-      for ( let i = 0; i < gltf.animations.length; i ++ ) {
-        const clip = gltf.animations[ i ];
-        const action = mixer.clipAction( clip );
-        actions[ clip.name ] = action;
+    motherNpc1Group = new THREE.Group();
+    motherRockOrbisGroup.add( motherNpc1Group );
 
-        if ( emotes.indexOf( clip.name ) >= 0 || states.indexOf( clip.name ) >= 4 ) {
+    motherNpc1Node = new GLOBE.GlobeRobotCharaNode();
+    motherNpc1Node.position.y = 600;
+    motherNpc1Node.action = 'Running';
+    motherNpc1Group.add(motherNpc1Node);
+    motherNpc1Group.quaternion.setFromEuler(new THREE.Euler(70, 74, 0));
 
-          action.clampWhenFinished = true;
-          action.loop = THREE.LoopOnce;
+    motherNpc2Group = new THREE.Group();
+    motherRockOrbisGroup.add( motherNpc2Group );
 
-        }
-      }
-      activeAction = actions[ 'Idle' ];
-      activeAction.play();
+    motherNpc2Node = new GLOBE.GlobeRobotCharaNode();
+    motherNpc2Node.position.y = 600;
+    motherNpc2Node.action = 'Running';
+    motherNpc2Group.add(motherNpc2Node);
+    motherNpc2Group.quaternion.setFromEuler(new THREE.Euler(160, 74, 0));
 
-    }, undefined, function ( e ) {
-      console.error( e );
-    } );
+    satelliteNpcGroup = new THREE.Group();
+    satelliteRockOrbisGroup.add( satelliteNpcGroup );
+
+    satelliteNpcNode = new GLOBE.GlobeRobotCharaNode();
+    satelliteNpcNode.position.y = 40;
+    satelliteNpcNode.action = 'Dance';
+    satelliteNpcGroup.add(satelliteNpcNode);
+    satelliteNpcGroup.quaternion.setFromEuler(new THREE.Euler(82, 44, 0));
 
     // RENDERER
-
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     container.appendChild(renderer.domElement);
-
     effect = new OutlineEffect(renderer)
 
     // EVENTS
-
     container.style.touchAction = 'none';
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -324,86 +168,64 @@
     window.addEventListener('resize', onWindowResize);
 
     renderer.setAnimationLoop(() => {
-      satelliteGroup.rotation.x = Date.now() / 5000;
-      satelliteGroup.rotation.z = 42;
+      satelliteRockOrbisGroup.rotation.z = Date.now() / 50000;
+      satelliteRockOrbisGroup.rotation.y = Date.now() / 100000;
 
       // Slerp
-      quaternionM.slerpQuaternions(previousQuaternion, targetQuaternion, slerpTime+=0.05);
-      root.quaternion.set(quaternionM.x, quaternionM.y, quaternionM.z, quaternionM.w);
+      quaternionM.slerpQuaternions(previousQuaternion, targetQuaternion, slerpTime += 0.05);
+      root.quaternion.copy(quaternionM);
     })
   }
 
   function onWindowResize() {
-
-    windowHalfX = window.innerWidth / 2;
-
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     // renderer.setSize(window.innerWidth, window.innerHeight);
     effect.setSize( window.innerWidth, window.innerHeight );
-
   }
-
-  function fadeToAction( name, duration, force = false ) {
-    if (force == false) {
-      if ( activeAction == actions[ name ] ) return;
-    }
-
-    previousAction = activeAction;
-    activeAction = actions[ name ];
-
-    if ( previousAction !== activeAction ) {
-      previousAction.fadeOut( duration );
-    }
-
-    activeAction
-      .reset()
-      .setEffectiveTimeScale( 1 )
-      .setEffectiveWeight( 1 )
-      .fadeIn( duration )
-      .play();
-  }
-  //
 
   function animate() {
-
-    const dt = clock.getDelta();
-
-    if ( mixer ) mixer.update( dt );
-
-    requestAnimationFrame(animate);
-
+    compute();
     render();
 
+    requestAnimationFrame(animate);
   }
 
   function onKeyDown(event) {
     const keyCode = event.which;
     if (keyCode == 37) {
       keyStatus.left = { pressed: true, ts: Date.now() };
-      fadeToAction('Walking', 0.2);
+      playerNode.fadeToAction('Walking', 0.2);
     }
     if (keyCode == 39) {
       keyStatus.right = { pressed: true, ts: Date.now() };
-      fadeToAction('Walking', 0.2);
+      playerNode.fadeToAction('Walking', 0.2);
     }
     if (keyCode == 38) {
       keyStatus.up = { pressed: true, ts: Date.now() };
-      fadeToAction('Walking', 0.2);
+      playerNode.fadeToAction('Walking', 0.2);
     }
     if (keyCode == 40) {
       keyStatus.down = { pressed: true, ts: Date.now() };
-      fadeToAction('Walking', 0.2);
+      playerNode.fadeToAction('Walking', 0.2);
     }
     if (keyCode == 13) {
-      fadeToAction("Dance", 0.5, true)
+      playerNode.fadeToAction("Dance", 0.5, true)
+      keyStatus.left = null;
+      keyStatus.right = null;
+      keyStatus.up = null;
+      keyStatus.down = null;
     }
     if (keyCode == 27) {
-      fadeToAction("Death", 0.5)
+      playerNode.fadeToAction("Death", 0.5)
+      keyStatus.left = null;
+      keyStatus.right = null;
+      keyStatus.up = null;
+      keyStatus.down = null;
     }
     if (keyCode == 32) {
-      fadeToAction("Jump", 0.5, true)
+      playerNode.fadeToAction("Jump", 0.5, true)
     }
   }
 
@@ -417,43 +239,60 @@
     if (keyCode == 27) return;
     if (keyCode == 32) return;
     if (keyStatus.left == null && keyStatus.right == null && keyStatus.up == null && keyStatus.down == null) {
-      fadeToAction('Idle', 0.2);
+      playerNode.fadeToAction('Idle', 0.2);
     }
   }
 
-  function render() {
-
-    if (model) {
-      let x = 0;
-      let y = 0;
+  function compute() {
+    (() => {
+      // Player moving
+      let x = 0, y = 0;
       if (keyStatus.left) y = -0.04;
       else if (keyStatus.right) y = 0.04;
       if (keyStatus.up) x = -0.01;
       else if (keyStatus.down) x = 0.01;
       
-
-      let quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
-      let modelQ = modelGroup.quaternion.invert().clone();
-      quaternion.multiply(modelQ)
-      const q = quaternion.invert();
-      modelGroup.quaternion.copy(q)
-
+      const rotationQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
+      const playerQuaternionInverted = playerGroup.quaternion.clone().invert();
+      const rotatedQuaternion = rotationQuaternion.multiply(playerQuaternionInverted).invert();
+      playerGroup.quaternion.copy(rotatedQuaternion);
+        
+      // Camera following
       previousQuaternion = root.quaternion.clone();
       targetQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, 0));
-      targetQuaternion.multiply(modelQ)
-      // root.quaternion.copy(targetQuaternion);
-
+      targetQuaternion.multiply(playerQuaternionInverted);
       slerpTime = 0;
-    }
+    })();
+    
+    (() => {
+      const rotationQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.01 / 3 * 2, 0, 0));
+      const motherNpcQuaternionInverted = motherNpc1Group.quaternion.clone().invert();
+      const rotatedQuaternion = rotationQuaternion.multiply(motherNpcQuaternionInverted).invert();
+      motherNpc1Group.quaternion.copy(rotatedQuaternion);
+    })();
 
+    (() => {
+      const rotationQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.01 / 3 * 2, 0, 0));
+      const motherNpcQuaternionInverted = motherNpc2Group.quaternion.clone().invert();
+      const rotatedQuaternion = rotationQuaternion.multiply(motherNpcQuaternionInverted).invert();
+      motherNpc2Group.quaternion.copy(rotatedQuaternion);
+    })();
+
+    playerNode.updateAnimation();
+    motherNpc1Node.updateAnimation();
+    motherNpc2Node.updateAnimation();
+    satelliteNpcNode.updateAnimation();
+  }
+
+  function render() {
 
     camera.lookAt(cameraTarget);
 
     // renderer.clear();
     // renderer.render(scene, camera);
+
     effect.clear();
     effect.render(scene, camera);
-
   }
 
 </script>
