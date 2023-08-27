@@ -48,19 +48,7 @@
   let renderer, effect;
   let camera, cameraTarget, scene;
 
-  let root, grassOrbisGroup;
-  let motherRockOrbisPivotGroup, motherRockOrbisGroup;
-  let satelliteRockOrbisPivotGroup, satelliteRockOrbisGroup;
-  
-  let playerGroup, playerNode;
-  let motherNpc1Group, motherNpc1Node;
-  let motherNpc2Group, motherNpc2Node;
-  let satelliteNpcGroup, satelliteNpcNode;
-
-  let previousQuaternion = new THREE.Quaternion();
-  let targetQuaternion = new THREE.Quaternion();
-  let slerpedQuaternion = new THREE.Quaternion();
-  let slerpTime = 0;
+  let root;
 
   let keyStatus = {};
 
@@ -118,31 +106,23 @@
 
   function onKeyDown(event) {
     const keyCode = event.which;
-    if (keyCode == 37) {
-      keyStatus.left = { pressed: true, ts: Date.now() };
-      root.walkPlayer();
-    }
-    if (keyCode == 39) {
-      keyStatus.right = { pressed: true, ts: Date.now() };
-      root.walkPlayer();
-    }
-    if (keyCode == 38) {
-      keyStatus.up = { pressed: true, ts: Date.now() };
-      root.walkPlayer();
-    }
-    if (keyCode == 40) {
-      keyStatus.down = { pressed: true, ts: Date.now() };
-      root.walkPlayer();
-    }
+    if (keyCode == 37) keyStatus.left = { pressed: true, ts: Date.now() };
+    if (keyCode == 39) keyStatus.right = { pressed: true, ts: Date.now() };
+    if (keyCode == 38) keyStatus.up = { pressed: true, ts: Date.now() };
+    if (keyCode == 40) keyStatus.down = { pressed: true, ts: Date.now() };
     if (keyCode == 13) {
+
+    }
+    if (keyCode == 32) {
       root.randomActionPlayer();
       keyStatus.left = null;
       keyStatus.right = null;
       keyStatus.up = null;
       keyStatus.down = null;
+      return;
     }
-    if (keyCode == 32) {
-      root.jumpPlayer();
+    if (keyStatus.left != null || keyStatus.right != null || keyStatus.up != null || keyStatus.down != null) {
+      root.walkPlayer();
     }
   }
 
