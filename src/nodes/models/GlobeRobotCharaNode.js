@@ -86,6 +86,9 @@ class GlobeRobotCharaNode extends Group {
   }
 
   fadeToAction(name, duration = 0.2, force = false) {
+    if (name == "Random") {
+      name = this.getRendomActionName();
+    }
     if (this.actions[name] == null) return;
     if (force == false) {
       if ( this.activeAction == this.actions[name] ) return;
@@ -111,6 +114,11 @@ class GlobeRobotCharaNode extends Group {
       const dt = this.clock.getDelta();
       this.mixer.update( dt );
     }
+  }
+
+  getRendomActionName() {
+    const actions = ["Dance", "Wave", "Death", "Standing", "Yes", "No", "Wave", "Punch", "ThumbsUp"];
+    return actions[Math.floor(Math.random() * actions.length)];
   }
 }
 
