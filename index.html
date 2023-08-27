@@ -2,20 +2,97 @@
 <html lang="en">
 
 <head>
-  <title>Globe - in a universe of imagination</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <style>
-    html,
-    body {
-      margin: 0px;
-      background-color: black;
-      overflow: hidden;
-    }
-  </style>
+<title>Globe - in a universe of imagination</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+html, body { width: 100%; height: 100%; margin: 0px; background-color: black; overflow: hidden; }
+
+div.layout-bottom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  transition: bottom 0.4s ease-in-out;
+  overflow: hidden;
+}
+div.layout-show-bottom {
+  display: flex;
+  align-items: center;
+  width: 64px;
+  height: 64px;
+  opacity: 1;
+  transition: opacity 0.4s ease-in-out;
+}
+button.button-show-typing {
+  width: 64px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid black;
+  outline: none;
+  margin: 0px;
+  padding: 0px;
+  background-color: #ffc800;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0px 0px 2px black;
+  box-shadow: inset 0px 0px 4px 2px white;
+  cursor: pointer;
+  user-select: none;
+}
+button.button-show-typing:hover { background-color: #00c8ff; }
+button.button-show-typing:active { background-color: #c8ff00; }
+div.layout-typing {
+  display: flex;
+  justify-content: center;
+  width: 400px;
+  max-width: 100%;
+  height: 40px;
+  background-color: black;
+  border: 1px solid black;
+  border-radius: 8px 8px 0px 0px;
+  overflow: hidden;
+}
+button.button-submit-typing {
+  width: 80px;
+  border: none;
+  outline: none;
+  margin: 0px;
+  padding: 0px;
+  border-left: 1px solid black;
+  background-color: #ffc800;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0px 0px 2px black;
+  box-shadow: inset 0px 0px 4px 2px white;
+  cursor: pointer;
+  user-select: none;
+}
+button.button-submit-typing:hover { background-color: #00c8ff; }
+button.button-submit-typing:active { background-color: #c8ff00; }
+
+body[data-mode=moving] .layout-typing { user-select: none; pointer-events: none; }
+body[data-mode=moving] .layout-bottom { bottom: -42px; }
+
+body[data-mode=typing] .layout-show-bottom { opacity: 0; }
+</style>
 </head>
 
-<body>
+<body data-mode="typing">
+
+<div class="layout-bottom">
+  <div class="layout-show-bottom">
+    <button class="button-show-typing">메시지</button>
+  </div>
+  <div class="layout-typing">
+    <input class="input-typing" type="text" style="display: block; position: relative; padding: 12px; width: 100%;  border: none; outline: none; background-color: white; color: black; font-size: 14px; font-family: sans-serif;">
+    <button class="button-submit-typing">보내기</button>
+  </div>
+</div>
 
 <!-- Import maps polyfill -->
 <!-- Remove this when import maps will be widely supported -->
@@ -162,6 +239,85 @@
     effect.clear();
     effect.render(scene, camera);
   }
+
+</script>
+
+<script type="module">
+const GlobeApp = function() {
+  let mode;
+
+  // Elements
+  const showTypingButton = document.querySelector('.button-show-typing');
+  const typingBox = document.querySelector('.input-typing');
+  const submitTypingButton = document.querySelector('.button-submit-typing');
+
+  this.setTypingMode = function() {
+    document.body.setAttribute('data-mode', mode = 'typing');
+    typingBox.disabled = false;
+    typingBox.focus();
+  };
+  
+  this.setMovingMode = function() {
+    console.log('this.setMovingMode();')
+    document.body.setAttribute('data-mode', mode = 'moving');
+    typingBox.disabled = true;
+    typingBox.blur();
+  };
+
+  this.submitTyping = function() {
+    const typingContent = typingBox.value.trim();
+    if (!typingContent) {
+      typingBox.value = null;
+      return false;
+    }
+
+    typingBox.value = null;
+
+    // TODO
+    console.log(typingContent);
+    
+    return true;
+  }
+
+  // Initialize events
+  showTypingButton.addEventListener('click', () => {
+    this.setTypingMode();
+  });
+
+  typingBox.addEventListener('keydown', (event) => {
+    if (mode != "typing") return;
+    
+    if (event.which == 13) {
+      const success = this.submitTyping();
+      if (success == false) {
+        setTimeout(() => {
+          this.setMovingMode();
+        });
+      }
+    }
+  });
+
+  submitTypingButton.addEventListener('click', () => {
+    if (mode != "typing") return;
+
+    this.submitTyping();
+  });
+  
+  window.addEventListener('keydown', (event) => {
+    if (event.which == 13) {
+      this.setTypingMode();
+    } else if (event.which == 27) {
+      this.setMovingMode();
+    }
+  });
+
+  // Initialize status
+  this.setTypingMode();
+};
+
+window.onload = function() {
+  const app = new GlobeApp();
+};
 
 </script>
 
