@@ -45,12 +45,12 @@
 
   let container;
 
-  let camera, cameraTarget, scene, renderer, effect;
+  let renderer, effect;
+  let camera, cameraTarget, scene;
 
   let root, grassOrbisGroup;
-  let motherRockOrbisGroup;
-  let satelliteRockOrbisGroup;
-  let modelCamera;
+  let motherRockOrbisPivotGroup, motherRockOrbisGroup;
+  let satelliteRockOrbisPivotGroup, satelliteRockOrbisGroup;
   
   let playerGroup, playerNode;
   let motherNpc1Group, motherNpc1Node;
@@ -59,7 +59,7 @@
 
   let previousQuaternion = new THREE.Quaternion();
   let targetQuaternion = new THREE.Quaternion();
-  let quaternionM = new THREE.Quaternion();
+  let slerpedQuaternion = new THREE.Quaternion();
   let slerpTime = 0;
 
   let keyStatus = {};
@@ -107,13 +107,17 @@
     
     motherRockOrbisGroup = new THREE.Group();
     motherRockOrbisGroup.add(new GLOBE.GlobeRockOrbisMesh({ size: 600, detail: 4 }))
-    motherRockOrbisGroup.position.set(-300, -1000, -500);
-    grassOrbisGroup.add(motherRockOrbisGroup);
+    motherRockOrbisGroup.position.set(-300, -1200, -500);
+    motherRockOrbisPivotGroup = new THREE.Group();
+    motherRockOrbisPivotGroup.add(motherRockOrbisGroup);
+    grassOrbisGroup.add(motherRockOrbisPivotGroup);
 
     satelliteRockOrbisGroup = new THREE.Group();
     satelliteRockOrbisGroup.add(new GLOBE.GlobeRockOrbisMesh({ size: 40, detail: 2 }));
     satelliteRockOrbisGroup.position.set(0, -500, 0);
-    grassOrbisGroup.add(satelliteRockOrbisGroup);
+    satelliteRockOrbisPivotGroup = new THREE.Group();
+    satelliteRockOrbisPivotGroup.add(satelliteRockOrbisGroup);
+    grassOrbisGroup.add(satelliteRockOrbisPivotGroup);
 
     scene.add(root);
 
@@ -168,12 +172,19 @@
     window.addEventListener('resize', onWindowResize);
 
     renderer.setAnimationLoop(() => {
-      satelliteRockOrbisGroup.rotation.z = Date.now() / 50000;
-      satelliteRockOrbisGroup.rotation.y = Date.now() / 100000;
+      motherRockOrbisPivotGroup.rotation.z = Date.now() / 40000;
+      motherRockOrbisPivotGroup.rotation.y = -0.5;
+      motherRockOrbisGroup.rotation.z = Date.now() / 20000;
+      motherRockOrbisGroup.rotation.y = Date.now() / 40000;
+
+      satelliteRockOrbisPivotGroup.rotation.z = Date.now() / 5000;
+      satelliteRockOrbisPivotGroup.rotation.y = 0.5;
+      satelliteRockOrbisGroup.rotation.z = Date.now() / 1000;
+      satelliteRockOrbisGroup.rotation.y = Date.now() / 3000;
 
       // Slerp
-      quaternionM.slerpQuaternions(previousQuaternion, targetQuaternion, slerpTime += 0.05);
-      root.quaternion.copy(quaternionM);
+      slerpedQuaternion.slerpQuaternions(previousQuaternion, targetQuaternion, slerpTime += 0.05);
+      root.quaternion.copy(slerpedQuaternion);
     })
   }
 
