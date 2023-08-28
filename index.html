@@ -101,6 +101,10 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
   </div>
 </div>
 
+<div>
+  <div class="test" style="position: absolute; width: 92px; height: 24px; font-size: 14px; font-family: sans-serif; border-radius: 8px; margin-left: -46px; margin-top: -84px; line-height: 24px; text-align: center; color: black; background-color: rgba(255, 255, 255, 0.4); vertical-align: middle;">Anonymous</div>
+</div>
+
 <!-- Import maps polyfill -->
 <!-- Remove this when import maps will be widely supported -->
 <script async src=" https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
@@ -127,6 +131,7 @@ import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 THREE.Cache.enabled = true;
 
 let container;
+let testElement;
 
 let renderer, effect;
 let scene;
@@ -140,6 +145,8 @@ function init() {
 
   container = document.createElement('div');
   document.body.appendChild(container);
+  
+  testElement = document.querySelector('.test');
 
   // SCENE
   scene = new GLOBE.GlobeOrbisScene();
@@ -231,6 +238,14 @@ function compute() {
   scene.movePlayer(movingDirection, turningDirection);
 
   scene.updateAnimation();
+  
+  const v = new THREE.Vector3();
+  scene.playerNode.getWorldPosition(v);
+  v.project(scene.camera);
+  const x = (v.x + 1) * window.innerWidth * 0.5;
+  const y = (1 - v.y) * window.innerHeight * 0.5;
+  testElement.style.left = x + 'px';
+  testElement.style.top = y + 'px';
 }
 
 function render() {
