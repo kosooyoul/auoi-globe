@@ -7,6 +7,7 @@ import { GlobeRingOrbisMesh } from './nodes/meshes/GlobeRingOrbisMesh.js';
 import { GlobeRobotCharaNode } from './nodes/models/GlobeRobotCharaNode.js';
 import { GlobeOrbisScene } from './scenes/GlobeOrbisScene.js';
 import { GlobeRenderer } from './renderers/GlobeRenderer.js';
+import { GlobeChatView } from './views/GlobeChatView.js';
 
 export {
   GlobeRockMaterial,
@@ -18,4 +19,5 @@ export {
   GlobeRobotCharaNode,
   GlobeOrbisScene,
   GlobeRenderer,
+  GlobeChatView,
 }
