@@ -21,12 +21,12 @@ class GlobeRenderer {
     this.container = container;
     this.testElement = document.querySelector('.test');
 
-    this.initializeRenderer();
-    this.initializeScene();
-    this.initializeGlobalEvent();
+    this._initializeRenderer();
+    this._initializeScene();
+    this._initializeEvent();
   }
 
-  initializeRenderer() {
+  _initializeRenderer() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -37,21 +37,19 @@ class GlobeRenderer {
     }
   }
 
-  initializeScene() {
+  _initializeScene() {
     this.scene = new GLOBE.GlobeOrbisScene();
-    this.scene.setOnPlayerStatusListener((status) => this.onPlayerStatus(status));
+    this.scene.setOnPlayerStatusListener((status) => this._onPlayerStatus(status));
   }
 
-  initializeGlobalEvent() {
-    window.addEventListener('message', (event) => this.onMessage(event));
-
-    window.addEventListener('resize', (event) => this.onWindowResize(event));
-
-    window.addEventListener('keydown', (event) => this.onKeyDown(event));
-    window.addEventListener('keyup', (event) => this.onKeyUp(event));
+  _initializeEvent() {
+    window.addEventListener('message', (event) => this._onMessage(event));
+    window.addEventListener('resize', (event) => this._onWindowResize(event));
+    window.addEventListener('keydown', (event) => this._onKeyDown(event));
+    window.addEventListener('keyup', (event) => this._onKeyUp(event));
   }
 
-  onPlayerStatus({ quaternion, action }) {
+  _onPlayerStatus({ quaternion, action }) {
     window.postMessage({
       'type': 'player-status',
       'quaternion': {
@@ -64,13 +62,13 @@ class GlobeRenderer {
     });
   }
 
-  onMessage(event) {
+  _onMessage(event) {
     if (event.data.type == 'people-status') {
       this.scene.updatePeopleStatus(event.data.id, event.data);
     }
   }
 
-  onWindowResize() {
+  _onWindowResize() {
     this.scene.setAspectRatio(window.innerWidth / window.innerHeight);
 
     if (GlobeRenderer.CARTOON_MODE) {
@@ -80,7 +78,7 @@ class GlobeRenderer {
     }
   }
 
-  onKeyDown(event) {
+  _onKeyDown(event) {
     const keyCode = event.which;
     if (keyCode == 37) this.keyStatus.left = { pressed: true, ts: Date.now() };
     if (keyCode == 39) this.keyStatus.right = { pressed: true, ts: Date.now() };
@@ -99,7 +97,7 @@ class GlobeRenderer {
     }
   }
 
-  onKeyUp(event) {
+  _onKeyUp(event) {
     const keyCode = event.which;
     if (keyCode == 37) this.keyStatus.left = null;
     if (keyCode == 39) this.keyStatus.right = null;
