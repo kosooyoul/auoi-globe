@@ -1,4 +1,6 @@
 class GlobeSocket {
+  socket;
+
   onlineObjects = {};
   socketId = null;
 
@@ -88,7 +90,7 @@ class GlobeSocket {
 
   sendChat(message) {
     this.socket.emit('message', { message });
-    window.postMessage({ type: 'people-message', id: socketId, message: message });
+    window.postMessage({ type: 'people-message', id: this.socketId, message: message });
   };
 
   sendPlayerStatus({ quaternion, action }) {

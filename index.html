@@ -133,6 +133,8 @@ const GlobeApp = function() {
   
   const renderer = new GLOBE.GlobeRenderer(container);
   renderer.start();
+
+  const socket = new GLOBE.GlobeSocket();
 };
 
 window.onload = function() {
