@@ -124,8 +124,6 @@ body[data-mode=typing] .layout-show-bottom { opacity: 0; }
 <script type="module">
 import * as GLOBE from 'globe';
 
-let testElement;
-
 const GlobeApp = function() {
   const view = new GLOBE.GlobeChatView();
 
@@ -137,111 +135,8 @@ const GlobeApp = function() {
   renderer.start();
 };
 
-const GlobeSocket = function() {
-  const socket = new io('https://subscribe.auoi.net');
-
-  const onlineObjects = {};
-  let socketId = null;
-
-  const onReady = (data) => {
-    socketId = data.id;
-    console.log('socketId', data);
-
-    for (const id in data.objects) {
-      const object = data.objects[id];
-      onlineObjects[id] = { id: object.id, quaternion: object.q, action: object.a, message: null };
-    }
-
-    // socket.emit('enter', { q: object.q, a: object.a  });x
-  };
-
-  const onEnter = (data) => {
-    if (data.id == socketId) return;
-
-    onlineObjects[data.id] = {
-      id: data.id,
-      quaternion: data.q,
-      action: data.a,
-      message: null,
-    };
-  };
-
-  const onMove = (data) => {
-    if (data.id == socketId) return;
-
-    window.postMessage({ type: 'people-status', id: data.id, quaternion: data.q, action: data.a });
-
-    // if (onlineObjects[data.id] == null) {
-    //   onlineObjects[data.id] = {
-    //     id: data.id,
-    //     quaternion: data.q,
-    //     action: data.a,
-    //     message: null,
-    //   };
-    // } else {
-    //   onlineObjects[data.id].quaternion = data.q;
-    //   onlineObjects[data.id].action = data.a;
-    //   onlineObjects[data.id].message = data.m;
-    // }
-  };
-
-  const onLeave = (data) => {
-    if (data.id == socketId) return;
-
-    delete onlineObjects[data.id];
-  };
-
-  const onMessage = (data) => {
-    if (data.id == socketId) return;
-
-    window.postMessage({ type: 'people-message', id: data.id, message: data.message });
-
-    // if (onlineObjects[data.id] != null) {
-    //   onlineObjects[data.id].message = data.m;
-    //   onlineObjects[data.id].messageExpiresIn = Date.now() + 1000 * 5;
-    // }
-  };
-
-  this.subscribe = function() {
-    socket.on('ready', onReady);
-    socket.on('enter', onEnter);
-    socket.on('move', onMove);
-    socket.on('leave', onLeave);
-    socket.on('message', onMessage);
-  };
-
-  this.sendMessage = function(message) {
-    socket.emit('message', { message });
-    window.postMessage({ type: 'people-message', id: socketId, message: message });
-  };
-
-  this.postStatus = function({ quaternion, action }) {
-		socket.emit('move', {
-			q: quaternion,
-			a: action,
-		});
-  };
-
-  let lastPlayerStatusPostedAt;
-  window.addEventListener('message', (event) => {
-    if (event.data.type == 'player-status') {
-      if (Date.now() - lastPlayerStatusPostedAt < 1000) return;
-
-      this.postStatus({
-        quaternion: event.data.quaternion,
-        action: event.data.action,
-      });
-      lastPlayerStatusPostedAt = Date.now();
-    } else if (event.data.type == 'player-message') {
-      this.sendMessage(event.data.message);
-    }
-  });
-};
-
 window.onload = function() {
   const app = new GlobeApp();
-  const socket = new GlobeSocket();
-  socket.subscribe();
 };
 </script>
 
